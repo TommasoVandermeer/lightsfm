@@ -165,9 +165,15 @@ public:
     y *= scalar;
     return *this;
   }
+
   Vector2d operator*(double scalar) const
   {
     return Vector2d(x * scalar, y * scalar);
+  }
+
+  Vector2d operator*(const Vector2d& other)
+  {
+    return Vector2d(x * other.x , y * other.y);
   }
 
   Vector2d& operator/=(double scalar)
@@ -214,7 +220,20 @@ public:
     return Vector2d(-x, -y);
   }
 
+  Vector2d tangent() const
+  {
+    return Vector2d(-y, x);
+  }
 
+  double operator*(const std::vector<double>& array)
+  {
+    return double(x * array.at(0) + y * array.at(1));
+  }
+
+  Vector2d operator*(const double matrix[2][2])
+  {
+    return Vector2d(matrix[0][0] * x + matrix[0][1] * y, matrix[1][0] * x + matrix[1][1] * y);
+  }
 
   static const Vector2d& Zero()
   {

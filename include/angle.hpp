@@ -175,7 +175,7 @@ public:
   }
 
 
-private:
+public:
   Angle(double value)
   {
     Angle::value = value;
