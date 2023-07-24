@@ -25,11 +25,12 @@
 /***********************************************************************/
 
 #include <iostream>
+#include <lightsfm/sfm.hpp>
 #include <lightsfm/hsfm.hpp>
 
 int main()
 {
-	sfm::SFM;
+	hsfm::HSFM;
 	std::cout<<"TEST"<<std::endl;
 	
 	// Initial params
@@ -42,27 +43,27 @@ int main()
 	double dt = 0.05;
 
 	// Test agent
-	sfm::Agent agent1(initialPosition1, initialYaw, initialLinVel, initialAngVel);
-	sfm::Agent agent2(initialPosition2, initialYaw, initialLinVel, initialAngVel);
-	sfm::Agent agent3(initialPosition3, initialYaw, initialLinVel, initialAngVel);
+	hsfm::Agent agent1(initialPosition1, initialYaw, initialLinVel, initialAngVel);
+	hsfm::Agent agent2(initialPosition2, initialYaw, initialLinVel, initialAngVel);
+	hsfm::Agent agent3(initialPosition3, initialYaw, initialLinVel, initialAngVel);
 
 	// Set goals
-	sfm::Goal goal1;
+	hsfm::Goal goal1;
 	goal1.center.set(3,3);
 	goal1.radius = 0.3;
-	sfm::Goal goal2;
+	hsfm::Goal goal2;
 	goal1.center.set(5,5);
 	goal1.radius = 0.3;
-	std::list<sfm::Goal> goals = {goal1, goal2};
+	std::list<hsfm::Goal> goals = {goal1, goal2};
 	agent1.goals = goals;
 	agent2.goals = goals;
 	agent3.goals = goals;
 
-	std::vector<sfm::Agent> other_agents = {agent2, agent3};
+	std::vector<hsfm::Agent> other_agents = {agent2, agent3};
 	//TBD: Test Map
 	for (unsigned i = 0; i < 100; i++) {
-		sfm::SFM.computeForces(agent1, other_agents);
-		sfm::SFM.updatePosition(agent1, dt);
+		hsfm::HSFM.computeForces(agent1, other_agents);
+		hsfm::HSFM.updatePosition(agent1, dt);
 
 		std::cout<<"Iteration: "<<i<<std::endl;
 		std::cout<<"Time: "<<(i+1)*dt<<std::endl;

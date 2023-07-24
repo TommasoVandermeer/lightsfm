@@ -26,7 +26,7 @@
 
 #include "vector2d.hpp"
 
-namespace sfm
+namespace utils
 {
 class Map
 {

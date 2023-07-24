@@ -29,7 +29,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace sfm {
+namespace hsfm {
 struct Forces {
   utils::Vector2d desiredForce; // f_i^o
   utils::Vector2d obstacleForce; // f_i^w
@@ -132,11 +132,10 @@ public:
     return singleton;
   }
 
-#define SFM SocialForceModel::getInstance()
+#define HSFM SocialForceModel::getInstance()
 
-  std::vector<Agent> &computeForces(std::vector<Agent> &agents,
-                                    Map *map = NULL) const;
-  void computeForces(Agent &me, std::vector<Agent> &agents, Map *map = NULL);
+  std::vector<Agent> &computeForces(std::vector<Agent> &agents, utils::Map *map = NULL) const;
+  void computeForces(Agent &me, std::vector<Agent> &agents, utils::Map *map = NULL);
   std::vector<Agent> &updatePosition(std::vector<Agent> &agents,
                                      double dt) const;
   void updatePosition(Agent &me, double dt) const;
@@ -145,7 +144,7 @@ private:
 #define PW(x) ((x) * (x))
   SocialForceModel() {}
   utils::Vector2d computeDesiredForce(Agent &agent) const;
-  void computeObstacleForce(Agent &agent, Map *map) const;
+  void computeObstacleForce(Agent &agent, utils::Map *map) const;
   void computeSocialForce(unsigned index, std::vector<Agent> &agents) const;
   void computeSocialForce(Agent &agent, std::vector<Agent> &agents) const;
   void computeGroupForce(unsigned index,
@@ -172,7 +171,7 @@ SocialForceModel::computeDesiredForce(Agent &agent) const {
   return desiredDirection;
 }
 
-inline void SocialForceModel::computeObstacleForce(Agent &agent, Map *map) const {
+inline void SocialForceModel::computeObstacleForce(Agent &agent, utils::Map *map) const {
   // Method to compute the repulsive force coming from obstacles
   if (agent.obstacles1.size() > 0 || agent.obstacles2.size() > 0) {
     // Obstacles already available
@@ -195,7 +194,7 @@ inline void SocialForceModel::computeObstacleForce(Agent &agent, Map *map) const
   } else if (map != NULL) {
     // Obstacles not available yet
     agent.forces.obstacleForce.set(0, 0);
-    const Map::Obstacle &obs = map->getNearestObstacle(agent.position);
+    const utils::Map::Obstacle &obs = map->getNearestObstacle(agent.position);
     utils::Vector2d minDiff = agent.position - obs.position;
     double distance = minDiff.norm();
     utils::Vector2d t_iw = minDiff.normalized().tangent(); //Tangent
@@ -298,7 +297,7 @@ inline void SocialForceModel::computeGroupForce(Agent &me, const utils::Vector2d
   }
 }
 
-inline std::vector<Agent> &SocialForceModel::computeForces(std::vector<Agent> &agents, Map *map) const {
+inline std::vector<Agent> &SocialForceModel::computeForces(std::vector<Agent> &agents, utils::Map *map) const {
   std::unordered_map<int, Group> groups;
   for (unsigned i = 0; i < agents.size(); i++) {
     if (agents[i].groupId < 0) {
@@ -337,7 +336,7 @@ inline std::vector<Agent> &SocialForceModel::computeForces(std::vector<Agent> &a
   return agents;
 }
 
-inline void SocialForceModel::computeForces(Agent &me, std::vector<Agent> &agents, Map *map) {
+inline void SocialForceModel::computeForces(Agent &me, std::vector<Agent> &agents, utils::Map *map) {
   // form the group
   Group mygroup;
   if (me.groupId != -1) {
@@ -362,21 +361,21 @@ inline void SocialForceModel::computeForces(Agent &me, std::vector<Agent> &agent
   computeGroupForce(me, desiredDirection, agents, mygroup);
   me.forces.interactionForce = me.forces.obstacleForce + me.forces.socialForce;
 
-    // Rotational matrix
-    std::vector<double> rotationalMatrixForward {me.yaw.cos(), me.yaw.sin()}; // r_i^f
-    std::vector<double> rotationalMatrixOrthogonal {-me.yaw.sin(), me.yaw.cos()}; // r_i^o
+  // Rotational matrix
+  std::vector<double> rotationalMatrixForward {me.yaw.cos(), me.yaw.sin()}; // r_i^f
+  std::vector<double> rotationalMatrixOrthogonal {-me.yaw.sin(), me.yaw.cos()}; // r_i^o
 
-    // Forward global force
-    me.forces.globalForce.setX((me.forces.desiredForce + me.forces.interactionForce) * rotationalMatrixForward + me.forces.groupForce.getX()); // u_i^f
-    // Compute orthogonal velocity of the agent
-    double orthogonalVelocity = me.velocity * rotationalMatrixOrthogonal;
-    me.forces.globalForce.setY(me.params.kOrthogonal * (me.forces.interactionForce) * rotationalMatrixOrthogonal - me.params.kDamping * orthogonalVelocity + me.forces.groupForce.getY()); //u_i^o
-    // Torque parameters
-    me.kTheta = me.inertia * me.params.kLambda * me.forces.desiredForce.norm();
-    me.kOmega = me.inertia * (1 + me.params.alpha) * sqrt((me.params.kLambda * me.forces.desiredForce.norm()) / me.params.alpha);
-    // TBD: Compute angular velocity of the agent
-    // Torque force
-    me.forces.torqueForce = -me.kTheta * (me.yaw - me.forces.desiredForce.angle()).toRadian() - (me.kOmega * me.angularVelocity);
+  // Forward global force
+  me.forces.globalForce.setX((me.forces.desiredForce + me.forces.interactionForce) * rotationalMatrixForward + me.forces.groupForce.getX()); // u_i^f
+  // Compute orthogonal velocity of the agent
+  double orthogonalVelocity = me.velocity * rotationalMatrixOrthogonal;
+  me.forces.globalForce.setY(me.params.kOrthogonal * (me.forces.interactionForce) * rotationalMatrixOrthogonal - me.params.kDamping * orthogonalVelocity + me.forces.groupForce.getY()); //u_i^o
+  // Torque parameters
+  me.kTheta = me.inertia * me.params.kLambda * me.forces.desiredForce.norm();
+  me.kOmega = me.inertia * (1 + me.params.alpha) * sqrt((me.params.kLambda * me.forces.desiredForce.norm()) / me.params.alpha);
+  // TBD: Compute angular velocity of the agent
+  // Torque force
+  me.forces.torqueForce = -me.kTheta * (me.yaw - me.forces.desiredForce.angle()).toRadian() - (me.kOmega * me.angularVelocity);
 }
 
 inline void Agent::move(double dt) {
@@ -453,10 +452,24 @@ inline void SocialForceModel::updatePosition(Agent &agent, double dt) const {
   }
 
   agent.linearVelocity = agent.velocity.norm();
-  agent.angularVelocity = (agent.forces.torqueForce / agent.inertia) * dt;
+  agent.angularVelocity += (agent.forces.torqueForce / agent.inertia) * dt;
 
   agent.position += agent.velocity * dt;
   agent.yaw += utils::Angle(agent.angularVelocity * dt).toRadian();
+
+  // Debug prints
+  // std::cout<<"Desired force: "<<agent.forces.desiredForce<<std::endl;
+  // std::cout<<"Social force: "<<agent.forces.socialForce<<std::endl;
+  // std::cout<<"Obstacle force: "<<agent.forces.obstacleForce<<std::endl;
+  // std::cout<<"Interaction force (obstacle + social): "<<agent.forces.interactionForce<<std::endl;
+  // std::cout<<"Torque force: "<<agent.forces.torqueForce<<std::endl;
+  // std::cout<<"Group force: "<<agent.forces.groupForce<<std::endl;
+  // std::cout<<"Global force: "<<agent.forces.globalForce<<std::endl;
+  // std::cout<<"Agent translational velocity: "<<agent.velocity<<std::endl;
+  // std::cout<<"Agent angular velocity: "<<agent.angularVelocity<<std::endl;
+  // std::cout<<"Agent position: "<<agent.position<<std::endl;
+  // std::cout<<"Agent yaw: "<<agent.yaw<<std::endl;
+  // std::cout<<std::endl;
 
   agent.movement = agent.position - initPos;
   if (!agent.goals.empty() &&
@@ -470,5 +483,5 @@ inline void SocialForceModel::updatePosition(Agent &agent, double dt) const {
   }
 }
 
-} // namespace sfm
+} // namespace hsfm
 #endif

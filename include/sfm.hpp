@@ -135,8 +135,8 @@ public:
 #define SFM SocialForceModel::getInstance()
 
   std::vector<Agent> &computeForces(std::vector<Agent> &agents,
-                                    Map *map = NULL) const;
-  void computeForces(Agent &me, std::vector<Agent> &agents, Map *map = NULL);
+                                    utils::Map *map = NULL) const;
+  void computeForces(Agent &me, std::vector<Agent> &agents, utils::Map *map = NULL);
   std::vector<Agent> &updatePosition(std::vector<Agent> &agents,
                                      double dt) const;
   void updatePosition(Agent &me, double dt) const;
@@ -145,7 +145,7 @@ private:
 #define PW(x) ((x) * (x))
   SocialForceModel() {}
   utils::Vector2d computeDesiredForce(Agent &agent) const;
-  void computeObstacleForce(Agent &agent, Map *map) const;
+  void computeObstacleForce(Agent &agent, utils::Map *map) const;
   void computeSocialForce(unsigned index, std::vector<Agent> &agents) const;
   void computeSocialForce(Agent &agent, std::vector<Agent> &agents) const;
   void computeGroupForce(unsigned index,
@@ -177,7 +177,7 @@ SocialForceModel::computeDesiredForce(Agent &agent) const {
 }
 
 inline void SocialForceModel::computeObstacleForce(Agent &agent,
-                                                   Map *map) const {
+                                                   utils::Map *map) const {
 
   // Initially, the obstacles were expected to be in robot local frame. We have
   // replaced it to work in the same frame of the other forces.
@@ -220,7 +220,7 @@ inline void SocialForceModel::computeObstacleForce(Agent &agent,
     agent.forces.obstacleForce /=
         (double)(agent.obstacles1.size() + agent.obstacles2.size());
   } else if (map != NULL) {
-    const Map::Obstacle &obs = map->getNearestObstacle(agent.position);
+    const utils::Map::Obstacle &obs = map->getNearestObstacle(agent.position);
     utils::Vector2d minDiff = agent.position - obs.position;
     double distance = minDiff.norm() - agent.radius;
     agent.forces.obstacleForce =
@@ -449,7 +449,7 @@ inline void SocialForceModel::computeGroupForce(
 }
 
 inline std::vector<Agent> &
-SocialForceModel::computeForces(std::vector<Agent> &agents, Map *map) const {
+SocialForceModel::computeForces(std::vector<Agent> &agents, utils::Map *map) const {
   std::unordered_map<int, Group> groups;
   for (unsigned i = 0; i < agents.size(); i++) {
     if (agents[i].groupId < 0) {
@@ -476,7 +476,7 @@ SocialForceModel::computeForces(std::vector<Agent> &agents, Map *map) const {
 
 inline void SocialForceModel::computeForces(Agent &me,
                                             std::vector<Agent> &agents,
-                                            Map *map) {
+                                            utils::Map *map) {
   // form the group
   Group mygroup;
   if (me.groupId != -1) {
