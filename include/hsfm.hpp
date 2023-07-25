@@ -414,7 +414,7 @@ inline std::vector<Agent> &SocialForceModel::updatePosition(std::vector<Agent> &
         agents[i].velocity *= agents[i].desiredVelocity;
       }
       agents[i].linearVelocity = vB_i.norm();
-      agents[i].angularVelocity = (agents[i].forces.torqueForce / agents[i].inertia) * dt;
+      agents[i].angularVelocity += (agents[i].forces.torqueForce / agents[i].inertia) * dt;
 
       agents[i].yaw += utils::Angle(agents[i].angularVelocity * dt);
       agents[i].position += agents[i].velocity * dt;
