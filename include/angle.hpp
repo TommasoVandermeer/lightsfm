@@ -79,6 +79,11 @@ public:
     return std::sin(value);
   }
 
+  double negative() const
+  {
+    return -value;
+  }
+
   double toDegree(AngleRange range = PositiveNegativeRange) const
   {
     double degreeValue = value * 180 / M_PI;

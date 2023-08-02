@@ -90,6 +90,8 @@ struct Agent {
 
   utils::Vector2d position;
   utils::Vector2d velocity;
+  utils::Vector2d initPosition;
+  utils::Angle initYaw;
   utils::Angle yaw;
   utils::Vector2d movement;
   double desiredVelocity;
@@ -164,6 +166,10 @@ SocialForceModel::computeDesiredForce(Agent &agent) const {
     desiredDirection = diff.normalized();
     agent.forces.desiredForce = agent.mass * (agent.desiredVelocity * desiredDirection - agent.velocity) / agent.params.relaxationTime;
     agent.antimove = false;
+    // Debug prints
+    // std::cout<<"Desired direction: "<<desiredDirection<<std::endl;
+    // std::cout<<"Agent velocity: "<<agent.velocity<<std::endl;
+    // std::cout<<std::endl;
   } else {
     agent.forces.desiredForce = -agent.velocity / agent.params.relaxationTime;
     agent.antimove = true;
@@ -364,6 +370,8 @@ inline void SocialForceModel::computeForces(Agent &me, std::vector<Agent> &agent
   // Rotational matrix
   std::vector<double> rotationalMatrixForward {me.yaw.cos(), me.yaw.sin()}; // r_i^f
   std::vector<double> rotationalMatrixOrthogonal {-me.yaw.sin(), me.yaw.cos()}; // r_i^o
+  // std::vector<double> rotationalMatrixForward {std::cos(me.yaw.negative()), std::sin(me.yaw.negative())}; // r_i^f
+  // std::vector<double> rotationalMatrixOrthogonal {-std::sin(me.yaw.negative()), std::cos(me.yaw.negative())}; // r_i^o
 
   // Forward global force
   me.forces.globalForce.setX((me.forces.desiredForce + me.forces.interactionForce) * rotationalMatrixForward + me.forces.groupForce.getX()); // u_i^f
@@ -390,7 +398,8 @@ inline void Agent::move(double dt) {
 
 inline std::vector<Agent> &SocialForceModel::updatePosition(std::vector<Agent> &agents, double dt) const {
   for (unsigned i = 0; i < agents.size(); i++) {
-    utils::Vector2d initPos = agents[i].position;
+    agents[i].initPosition = agents[i].position;
+    agents[i].initYaw = agents[i].yaw;
     if (agents[i].teleoperated) {
       double imd = agents[i].linearVelocity * dt;
       utils::Vector2d inc(imd * std::cos(agents[i].yaw.toRadian() +
@@ -419,7 +428,7 @@ inline std::vector<Agent> &SocialForceModel::updatePosition(std::vector<Agent> &
       agents[i].yaw += utils::Angle(agents[i].angularVelocity * dt);
       agents[i].position += agents[i].velocity * dt;
     }
-    agents[i].movement = agents[i].position - initPos;
+    agents[i].movement = agents[i].position - agents[i].initPosition;
     if (!agents[i].goals.empty() &&
         (agents[i].goals.front().center - agents[i].position).norm() <=
             agents[i].goals.front().radius) {
@@ -435,11 +444,12 @@ inline std::vector<Agent> &SocialForceModel::updatePosition(std::vector<Agent> &
 
 inline void SocialForceModel::updatePosition(Agent &agent, double dt) const {
 
-  utils::Vector2d initPos = agent.position;
-  utils::Angle initYaw = agent.yaw;
+  agent.initPosition = agent.position;
+  agent.initYaw = agent.yaw;
 
   // Rotation matrix
-  double rotationMatrix[2][2] = {{initYaw.cos(), -initYaw.sin()},{initYaw.sin(), initYaw.cos()}};
+  double rotationMatrix[2][2] = {{agent.initYaw.cos(), -agent.initYaw.sin()},{agent.initYaw.sin(), agent.initYaw.cos()}};
+  // double rotationMatrix[2][2] = {{std::cos(agent.initYaw.negative()), -std::sin(agent.initYaw.negative())},{std::sin(agent.initYaw.negative()), std::cos(agent.initYaw.negative())}};
 
   // Bodyframe velocity
   utils::Vector2d vB_i = (agent.forces.globalForce / agent.mass) * dt;
@@ -471,7 +481,7 @@ inline void SocialForceModel::updatePosition(Agent &agent, double dt) const {
   // std::cout<<"Agent yaw: "<<agent.yaw<<std::endl;
   // std::cout<<std::endl;
 
-  agent.movement = agent.position - initPos;
+  agent.movement = agent.position - agent.initPosition;
   if (!agent.goals.empty() &&
       (agent.goals.front().center - agent.position).norm() <=
           agent.goals.front().radius) {

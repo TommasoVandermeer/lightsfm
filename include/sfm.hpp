@@ -90,8 +90,10 @@ struct Agent {
   void move(double dt); // only if teleoperated
 
   utils::Vector2d position;
+  utils::Vector2d initPosition;
   utils::Vector2d velocity;
   utils::Angle yaw;
+  utils::Angle initYaw;
 
   utils::Vector2d movement;
 
@@ -516,7 +518,7 @@ inline void Agent::move(double dt) {
 inline std::vector<Agent> &
 SocialForceModel::updatePosition(std::vector<Agent> &agents, double dt) const {
   for (unsigned i = 0; i < agents.size(); i++) {
-    utils::Vector2d initPos = agents[i].position;
+    agents[i].initPosition = agents[i].position;
     if (agents[i].teleoperated) {
       double imd = agents[i].linearVelocity * dt;
       utils::Vector2d inc(imd * std::cos(agents[i].yaw.toRadian() +
@@ -536,7 +538,7 @@ SocialForceModel::updatePosition(std::vector<Agent> &agents, double dt) const {
       agents[i].yaw = agents[i].velocity.angle();
       agents[i].position += agents[i].velocity * dt;
     }
-    agents[i].movement = agents[i].position - initPos;
+    agents[i].movement = agents[i].position - agents[i].initPosition;
     if (!agents[i].goals.empty() &&
         (agents[i].goals.front().center - agents[i].position).norm() <=
             agents[i].goals.front().radius) {
@@ -552,8 +554,8 @@ SocialForceModel::updatePosition(std::vector<Agent> &agents, double dt) const {
 
 inline void SocialForceModel::updatePosition(Agent &agent, double dt) const {
 
-  utils::Vector2d initPos = agent.position;
-  utils::Angle initYaw = agent.yaw;
+  agent.initPosition = agent.position;
+  agent.initYaw = agent.yaw;
 
   agent.velocity += agent.forces.globalForce * dt;
   if (agent.velocity.norm() > agent.desiredVelocity) {
@@ -564,9 +566,9 @@ inline void SocialForceModel::updatePosition(Agent &agent, double dt) const {
   agent.position += agent.velocity * dt;
 
   agent.linearVelocity = agent.velocity.norm();
-  agent.angularVelocity = (agent.yaw - initYaw).toRadian() / dt;
+  agent.angularVelocity = (agent.yaw - agent.initYaw).toRadian() / dt;
 
-  agent.movement = agent.position - initPos;
+  agent.movement = agent.position - agent.initPosition;
   if (!agent.goals.empty() &&
       (agent.goals.front().center - agent.position).norm() <=
           agent.goals.front().radius) {
