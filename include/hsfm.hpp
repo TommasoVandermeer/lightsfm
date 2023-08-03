@@ -261,7 +261,7 @@ inline void SocialForceModel::computeGroupForce(unsigned index, const utils::Vec
 
   // Forward force
   double forwardDist = p_i * rotationVecForward;
-  if (forwardDist > agent.params.groupDistanceForward) {
+  if (std::abs(forwardDist) < agent.params.groupDistanceForward) {
     agent.forces.groupForce.setX(agent.params.k1g);
   } else {
     agent.forces.groupForce.setX(double(0));
@@ -269,7 +269,7 @@ inline void SocialForceModel::computeGroupForce(unsigned index, const utils::Vec
 
   // Orthogonal force
   double orthogonalDist = p_i * rotationVecOrthogonal;
-  if (orthogonalDist > agent.params.groupDistanceOrthogonal) {
+  if (std::abs(orthogonalDist) < agent.params.groupDistanceOrthogonal) {
     agent.forces.groupForce.setY(agent.params.k2g);
   } else {
     agent.forces.groupForce.setY(double(0));
@@ -288,7 +288,7 @@ inline void SocialForceModel::computeGroupForce(Agent &me, const utils::Vector2d
 
   // Forward force
   double forwardDist = p_i * rotationVecForward;
-  if (forwardDist > me.params.groupDistanceForward) {
+  if (std::abs(forwardDist) < me.params.groupDistanceForward) {
     me.forces.groupForce.setX(me.params.k1g);
   } else {
     me.forces.groupForce.setX(double(0));
@@ -296,7 +296,7 @@ inline void SocialForceModel::computeGroupForce(Agent &me, const utils::Vector2d
 
   // Orthogonal force
   double orthogonalDist = p_i * rotationVecOrthogonal;
-  if (orthogonalDist > me.params.groupDistanceOrthogonal) {
+  if (std::abs(orthogonalDist) < me.params.groupDistanceOrthogonal) {
     me.forces.groupForce.setY(me.params.k2g);
   } else {
     me.forces.groupForce.setY(double(0));
